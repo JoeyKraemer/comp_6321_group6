@@ -1,0 +1,112 @@
+services:
+  clickhouse-keeper:
+    image: clickhouse/clickhouse-keeper:25.3
+    container_name: clickhouse-keeper
+    restart: unless-stopped
+    volumes:
+      - keeper-data:/var/lib/clickhouse
+      - ./clickhouse/keeper.xml:/etc/clickhouse-keeper/keeper_config.xml:ro
+    ports:
+      - "9181:9181"
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-keeper-client --host 127.0.0.1 --port 9181 -q 'ruok' | grep -q imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - comp6321
+
+  clickhouse-1:
+    image: clickhouse/clickhouse-server:25.3
+    container_name: clickhouse-1
+    restart: unless-stopped
+    depends_on:
+      clickhouse-keeper:
+        condition: service_healthy
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - clickhouse-1-data:/var/lib/clickhouse
+      - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/comp6321.xml:ro
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    networks:
+      - comp6321
+
+  clickhouse-2:
+    image: clickhouse/clickhouse-server:25.3
+    container_name: clickhouse-2
+    restart: unless-stopped
+    depends_on:
+      clickhouse-keeper:
+        condition: service_healthy
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - clickhouse-2-data:/var/lib/clickhouse
+      - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/comp6321.xml:ro
+    ports:
+      - "8124:8123"
+      - "9001:9000"
+    networks:
+      - comp6321
+
+  clickhouse-3:
+    image: clickhouse/clickhouse-server:25.3
+    container_name: clickhouse-3
+    restart: unless-stopped
+    depends_on:
+      clickhouse-keeper:
+        condition: service_healthy
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - clickhouse-3-data:/var/lib/clickhouse
+      - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/comp6321.xml:ro
+    ports:
+      - "8125:8123"
+      - "9002:9000"
+    networks:
+      - comp6321
+
+  langgraph:
+    build:
+      context: ./langgraph
+    container_name: langgraph
+    restart: unless-stopped
+    depends_on:
+      - clickhouse-1
+      - clickhouse-2
+      - clickhouse-3
+    environment:
+      CLICKHOUSE_HOST: clickhouse-1
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
+    volumes:
+      - ./langgraph:/app
+    ports:
+      - "2024:2024"
+    networks:
+      - comp6321
+
+volumes:
+  keeper-data:
+  clickhouse-1-data:
+  clickhouse-2-data:
+  clickhouse-3-data:
+
+networks:
+  comp6321:
+    driver: bridge
