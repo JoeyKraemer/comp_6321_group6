@@ -50,6 +50,17 @@ docker compose exec clickhouse-1 clickhouse-client \
 
 Stop the stack with `docker compose down`. Persistent database data remains in named Docker volumes; remove it with `docker compose down --volumes` when you want a clean reset.
 
+## Apply SQL setup scripts
+
+Keep shared schema and initialization queries in tracked `.sql` files so every teammate can apply the same database setup. For example, after adding `sql/init.sql`, run it against ClickHouse node 1 with:
+
+```bash
+docker compose exec -T clickhouse-1 clickhouse-client \
+  --user default --password clickhouse < sql/init.sql
+```
+
+Use the same `CLICKHOUSE_PASSWORD` value configured when the stack was started if you override the local default. SQL setup scripts are not yet included.
+
 ## Planned search workflow
 
 1. Load and shard the arXiv abstracts dataset (target size: at least 1 GB).
