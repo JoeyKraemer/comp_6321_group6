@@ -1,22 +1,38 @@
 <clickhouse>
+    <macros>
+        <shard from_env="CLICKHOUSE_SHARD" />
+        <replica from_env="CLICKHOUSE_REPLICA" />
+    </macros>
     <remote_servers>
         <comp6321_cluster>
             <shard>
+                <internal_replication>true</internal_replication>
                 <replica>
                     <host>clickhouse-1</host>
                     <port>9000</port>
+                    <user>default</user>
+                    <password from_env="CLICKHOUSE_PASSWORD" />
                 </replica>
-            </shard>
-            <shard>
                 <replica>
                     <host>clickhouse-2</host>
                     <port>9000</port>
+                    <user>default</user>
+                    <password from_env="CLICKHOUSE_PASSWORD" />
                 </replica>
             </shard>
             <shard>
+                <internal_replication>true</internal_replication>
                 <replica>
                     <host>clickhouse-3</host>
                     <port>9000</port>
+                    <user>default</user>
+                    <password from_env="CLICKHOUSE_PASSWORD" />
+                </replica>
+                <replica>
+                    <host>clickhouse-4</host>
+                    <port>9000</port>
+                    <user>default</user>
+                    <password from_env="CLICKHOUSE_PASSWORD" />
                 </replica>
             </shard>
         </comp6321_cluster>
